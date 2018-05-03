@@ -1,5 +1,6 @@
 import {combineReducers } from 'redux'
-import commonServicesReducer from './commonServicesReducer'
+import mainReducer from './mainReducer'
+
 export default combineReducers({
-    commonServices: commonServicesReducer
+    main: mainReducer
 })

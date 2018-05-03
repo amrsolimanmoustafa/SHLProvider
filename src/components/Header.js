@@ -3,29 +3,38 @@ import {
   View,
   Text,
   TouchableOpacity,
-  Image
+  Image,
+  Dimensions
 } from 'react-native'
-import styles from './Styles/HeaderStyle'
-import { Button,Icon } from "native-base"
+import styles from './styles/HeaderStyle'
 import {Images} from '../Themes';
- 
+const {width,height} = Dimensions.get('window')
+
 export default class Header extends Component {
   render () {
     return (
-      <View style={styles.container}>
-        <View style={styles.component}>
-          <Button style={styles.headerButton} transparent>
-            <Icon name="md-settings" type="Ionicons" style={styles.Icon}/>
-          </Button>
-        </View>
+      <View style={{width: width,height: 70,paddingTop: 20,flexDirection:"row",alignItems: 'center',justifyContent: 'space-between'}}>
+        <TouchableOpacity
+          style={{paddingVertical: 10,paddingHorizontal: 15}}
+        >
+          <Image
+            source={require('../assets/icons/Settings-icon.png')}
+            style={{}}
+          />
+        </TouchableOpacity>
         <View style={styles.componentCenter}>
-          <Image source={Images.logoCenter}/>
+          <Image
+            source={Images.logoCenter}
+          />
         </View>
-        <View style={styles.component}>
-          <Button style={styles.headerButton2} transparent>
-            <Image source={Images.User}/>
-          </Button>
-        </View>
+        <TouchableOpacity
+          style={{paddingVertical: 10,paddingHorizontal: 15}}
+        >
+          <Image
+            source={require('../assets/icons/User-icon.png')}
+            style={{}}
+          />
+        </TouchableOpacity>
       </View>
     )
   }
