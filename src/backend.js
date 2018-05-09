@@ -63,12 +63,23 @@ export default {
     },
 
     updateProviderActive(id,data){
-        /*let data={
-            "active":1
-        }*/
         console.log(`api/updateprovideractive/${id}`)
         console.log(JSON.stringify(data))
         return axios.put(`api/updateprovideractive/${id}`,
+            JSON.stringify(data)
+        )
+        .then(function(response) {
+            return response.data;
+        })
+        .catch(function(err) {
+            console.log("Error : ", err);
+        });
+    },
+
+    updateusertoken(id,data){
+        console.log(`api/updateusertoken/${id}`)
+        console.log(JSON.stringify(data))
+        return axios.put(`api/updateusertoken/${id}`,
             JSON.stringify(data)
         )
         .then(function(response) {

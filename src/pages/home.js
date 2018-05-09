@@ -26,6 +26,9 @@ var { RNLocation: Location } = require('NativeModules');
 import PopupDialog from 'react-native-popup-dialog';
 import strings from '../strings'
 import { withNavigation } from "react-navigation";
+import firebase from '../firebase'
+import FCM, {NotificationActionType} from "react-native-fcm";
+
 const {width,height} = Dimensions.get('window')
 
 class HomePage extends Component  {
@@ -37,7 +40,7 @@ class HomePage extends Component  {
     }
   }
 
-  componentDidMount() {
+async componentDidMount() {
     this.watchId = navigator.geolocation.watchPosition(
       (position) => {
         console.log(position)
@@ -46,6 +49,35 @@ class HomePage extends Component  {
       (error) => this.setState({ error: error.message }),
       { enableHighAccuracy: false, timeout: 20000, maximumAge: 1000, distanceFilter: 10 },
     );
+
+    FCM.getInitialNotification().then(notif => {
+      this.setState({
+        initNotif: notif
+      })
+      if(notif && notif.targetScreen === 'detail'){
+        setTimeout(()=>{
+          this.props.navigation.navigate('Detail')
+        }, 500)
+      }
+    });
+
+    try{
+      let result = await FCM.requestPermissions({badge: false, sound: true, alert: true});
+    } catch(e){
+      console.error(e);
+    }
+
+    FCM.getFCMToken().then(token => {
+      console.log("TOKEN (getFCMToken)", token);
+      ////// send this token to backend
+      this.setState({token: token || ""})
+    });
+
+    if(Platform.OS === 'ios'){
+      FCM.getAPNSToken().then(token => {
+        console.log("APNS TOKEN (getFCMToken)", token);
+      });
+    }    
   }
 
   componentWillUnmount() {

@@ -9,8 +9,6 @@ export default StyleSheet.create({
     width:"100%",
     height:"100%",
     padding:5
-
-
   },
   heading:{
     color:"rgb(27,118,186)",
@@ -33,8 +31,6 @@ export default StyleSheet.create({
   inputBoxView:{
     flexDirection:"row",
     marginTop:"3%",
-   
-
   },
   itemStyle:{
     marginLeft:"10%",
@@ -50,7 +46,6 @@ export default StyleSheet.create({
     fontSize:20,
     marginTop:"0%",
     // fontFamily:"NeoSansArabic",
-
   },
   input:{
     width:"100%",
@@ -60,7 +55,6 @@ export default StyleSheet.create({
     padding:0,
     // borderBottomWidth:1,
     // borderBottomColor:"black",
-    
   },
   countryView:{
     flexDirection:"column",
@@ -88,9 +82,6 @@ export default StyleSheet.create({
     marginTop:"2%",
     borderRadius: 80,
     width:"90%",
-    height:"60%",
-    
+    height:"30%",
   },
-
-  
 })
