@@ -10,7 +10,7 @@ import com.airbnb.android.react.maps.MapsPackage;
 import com.babisoft.ReactNativeLocalization.ReactNativeLocalizationPackage;
 import com.BV.LinearGradient.LinearGradientPackage;
 import io.invertase.firebase.RNFirebasePackage;
-import com.evollu.react.fcm.FIRMessagingPackage;
+//import com.evollu.react.fcm.FIRMessagingPackage;
 import com.facebook.react.ReactNativeHost;
 import com.facebook.react.ReactPackage;
 import com.facebook.react.shell.MainReactPackage;
@@ -37,8 +37,8 @@ public class MainApplication extends Application implements ReactApplication {
             new MapsPackage(),
             new ReactNativeLocalizationPackage(),
             new LinearGradientPackage(),
-            new RNFirebasePackage(),
-            new FIRMessagingPackage()
+            new RNFirebasePackage()
+            //new FIRMessagingPackage()
       );
     }
 

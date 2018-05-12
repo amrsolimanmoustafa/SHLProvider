@@ -8,4 +8,8 @@ target 'Shl_Provider' do
   pod 'Firebase/Messaging'
 
 
+  pod 'react-native-fcm', :path => '../node_modules/react-native-fcm'
+
+  pod 'RNVectorIcons', :path => '../node_modules/react-native-vector-icons'
+
 end

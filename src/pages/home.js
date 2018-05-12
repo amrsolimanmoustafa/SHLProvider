@@ -20,7 +20,8 @@ import Header from "../components/Header"
 import MapView from 'react-native-maps';
 import {
   updateProvidorLocation,
-  updateProviderActive
+  updateProviderActive,
+  updateUserToken
 } from "../actions"
 var { RNLocation: Location } = require('NativeModules');
 import PopupDialog from 'react-native-popup-dialog';
@@ -70,6 +71,7 @@ async componentDidMount() {
     FCM.getFCMToken().then(token => {
       console.log("TOKEN (getFCMToken)", token);
       ////// send this token to backend
+      this.props.updateUserToken(token)
       this.setState({token: token || ""})
     });
 
@@ -279,5 +281,6 @@ const mapStateToProps = ({main}) => {
 
 export default connect(mapStateToProps,{
   updateProvidorLocation,
-  updateProviderActive
+  updateProviderActive,
+  updateUserToken
 })(withNavigation(HomePage));

@@ -20,18 +20,6 @@ function handleRequestError(){
 
 export default {
     registerProvider(data){
-        /*let data={
-            "user_name":"23زود خدمة1",
-            "phone":"95558454",
-            "license_number":"54545464",
-            "vehicle_number":"54654654",
-            "services_id":1,
-            "sub_services_id":1,
-            "personal_pic":"",//string b64
-            "license_pic":"",//string b64
-            "long":"",//float
-            "lat":""//float
-        }*/
         console.log(`api/registerprovider`)
         return axios.post(`api/registerprovider`,
             JSON.stringify(data)    
@@ -76,10 +64,24 @@ export default {
         });
     },
 
-    updateusertoken(id,data){
-        console.log(`api/updateusertoken/${id}`)
+    updateprovidertoken(id,data){
+        console.log(`api/updateprovidertoken/${id}`)
         console.log(JSON.stringify(data))
-        return axios.put(`api/updateusertoken/${id}`,
+        return axios.put(`api/updateprovidertoken/${id}`,
+            JSON.stringify(data)
+        )
+        .then(function(response) {
+            return response.data;
+        })
+        .catch(function(err) {
+            console.log("Error : ", err);
+        });
+    },
+
+    acceptOrder(id,data){
+        console.log(`api/aceeptedorder/${id}`)
+        console.log(JSON.stringify(data))
+        return axios.put(`api/aceeptedorder/${id}`,
             JSON.stringify(data)
         )
         .then(function(response) {
