@@ -1,5 +1,6 @@
 import * as firebase from 'firebase';
-
+require('firebase/app');
+require('firebase/messaging');
 // should go in a secret file
 var config = {
   apiKey: "AIzaSyAm7qwx12pV5PdH100bkZQTtLfR6BGKk5U",
@@ -10,11 +11,12 @@ var config = {
   messagingSenderId: "663864784757"
 };
 
-const firebaseApp = firebase.initializeApp(config);
-firebaseApp.auth().signInAnonymously().catch(function(error) {
-  // Handle Errors here.
-  var errorCode = error.code;
-  var errorMessage = error.message;
-  // ...
+firebase.initializeApp(config);
+
+
+firebase.messaging().onMessage((message) => {
+  console.log(message)
 });
-export default firebaseApp;
+
+export default firebase;
+//export const messaging = firebase.messaging();

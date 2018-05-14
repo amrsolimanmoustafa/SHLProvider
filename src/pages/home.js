@@ -28,7 +28,8 @@ import PopupDialog from 'react-native-popup-dialog';
 import strings from '../strings'
 import { withNavigation } from "react-navigation";
 import firebase from '../firebase'
-import FCM, {NotificationActionType} from "react-native-fcm";
+
+import FCM, {FCMEvent, RemoteNotificationResult, WillPresentNotificationResult, NotificationType} from 'react-native-fcm';
 
 const {width,height} = Dimensions.get('window')
 
@@ -50,16 +51,10 @@ async componentDidMount() {
       (error) => this.setState({ error: error.message }),
       { enableHighAccuracy: false, timeout: 20000, maximumAge: 1000, distanceFilter: 10 },
     );
-
     FCM.getInitialNotification().then(notif => {
       this.setState({
         initNotif: notif
       })
-      if(notif && notif.targetScreen === 'detail'){
-        setTimeout(()=>{
-          this.props.navigation.navigate('Detail')
-        }, 500)
-      }
     });
 
     try{
@@ -79,7 +74,36 @@ async componentDidMount() {
       FCM.getAPNSToken().then(token => {
         console.log("APNS TOKEN (getFCMToken)", token);
       });
-    }    
+    }
+
+    this.notificationListener = FCM.on(FCMEvent.Notification, notif => {  
+      console.log(notif);
+      //aps.alert
+      //.body
+      //{"duration":50,"zone":"محمد فريد","pric":150,"title":"لديك طلب جديد","order_id":219}"
+      title:"لديك طلب جديد"
+      if(notif.local_notification){
+        console.log('this is a local notification')
+      }
+      if(notif.opened_from_tray){
+        console.log('open from tray')
+      }
+      if(Platform.OS ==='ios'){
+        switch(notif._notificationType){
+          case NotificationType.Remote:
+            notif.finish(RemoteNotificationResult.NewData) //other types available: RemoteNotificationResult.NewData, RemoteNotificationResult.ResultFailed
+            break;
+          case NotificationType.NotificationResponse:
+            notif.finish();
+            break;
+          case NotificationType.WillPresent:
+            notif.finish();//WillPresentNotificationResult.All) //other types available: WillPresentNotificationResult.None
+            break;
+        }
+      }
+    });
+
+
   }
 
   componentWillUnmount() {
@@ -87,6 +111,7 @@ async componentDidMount() {
     //Location.stopUpdatingLocation();
     const myModuleEvt = new NativeEventEmitter(Location)
     myModuleEvt.removeListener('locationUpdated')
+    //this.messageListener.remove();
   }
 
   render() {
