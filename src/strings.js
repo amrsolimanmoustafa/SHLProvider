@@ -13,6 +13,7 @@ let strings = new LocalizedStrings({
         second: 'second',
         youHaveNewOrder: 'You have a new order',
         approve: 'approve',
+        endOrder: 'End Order',
     },
     ar: {
         cancelOrder: 'الغاء الطلب',
@@ -22,6 +23,7 @@ let strings = new LocalizedStrings({
         second: 'ثانية',
         youHaveNewOrder: 'لديك طلب جديد',
         approve: 'قبول',
+        endOrder: 'انهاء الطلب'
     }
 });
 

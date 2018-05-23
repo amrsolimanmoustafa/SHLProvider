@@ -91,4 +91,40 @@ export default {
             console.log("Error : ", err);
         });
     },
+
+    getCancelResones(){
+        console.log(`api/getprovidercancelreasone?lang=ar`)
+        return axios.get(`api/getprovidercancelreasone?lang=ar`)
+        .then(function(response) {
+            return response.data;
+        })
+        .catch(function(err) {
+            console.log("Error : ", err);
+        });
+    },
+
+    cancelOrder(order_id,data){
+        console.log(`api/providercancel/${order_id}`)
+        console.log(JSON.stringify(data))
+        return axios.put(`api/providercancel/${order_id}`,
+            JSON.stringify(data)
+        )
+        .then(function(response) {
+            return response.data;
+        })
+        .catch(function(err) {
+            console.log("Error : ", err);
+        });
+    },
+
+    ordersuccess(order_id){
+        console.log(`api/ordersuccess/${order_id}`)
+        return axios.put(`api/ordersuccess/${order_id}`)
+        .then(function(response) {
+            return response.data;
+        })
+        .catch(function(err) {
+            console.log("Error : ", err);
+        });
+    },
 }

@@ -10,7 +10,7 @@ import ReduxThunk from 'redux-thunk';
 import {Provider} from 'react-redux';
 import {createStore, applyMiddleware} from 'redux';
 import store from './src/store'
-import ReduxNavigation from './src/router/reduxNavigation'
+import AppNavigation from './src/router/appNavigation'
 
 export default class App extends Component<> {
   constructor(props){
@@ -23,7 +23,7 @@ export default class App extends Component<> {
   render() {
     return (
       <Provider store={store}>
-        <ReduxNavigation />
+        <AppNavigation />
       </Provider>
     );
   }

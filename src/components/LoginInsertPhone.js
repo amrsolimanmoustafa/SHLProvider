@@ -13,7 +13,6 @@ import {Images} from '../Themes';
 import  LinearGradientButton  from "./LinearGradientButton";
 import axios from 'axios';
 import { withNavigation } from "react-navigation";
-import Toast from "react-native-simple-toast";
 import { connect } from 'react-redux'
 import {loginUser} from "../actions/authAction"
 

@@ -11,9 +11,10 @@ import {
   TouchableOpacity,
   Dimensions,
   Image,
-  I18nManager
+  I18nManager,
 } from 'react-native'
 import { connect } from 'react-redux'
+import OneSignal from 'react-native-onesignal';
 import {Images} from '../Themes';
 import styles from './styles/homeScreenStyle'
 import Header from "../components/Header"
@@ -21,104 +22,94 @@ import MapView from 'react-native-maps';
 import {
   updateProvidorLocation,
   updateProviderActive,
-  updateUserToken
+  updateUserToken,
+  acceptOrder,
+  getCancelResones,
+  cancelOrder,
+  endOrder
 } from "../actions"
-var { RNLocation: Location } = require('NativeModules');
 import PopupDialog from 'react-native-popup-dialog';
 import strings from '../strings'
 import { withNavigation } from "react-navigation";
-import firebase from '../firebase'
-
-import FCM, {FCMEvent, RemoteNotificationResult, WillPresentNotificationResult, NotificationType} from 'react-native-fcm';
+import firebase from 'react-native-firebase';
+import geofire from 'geofire';
+import Communications from 'react-native-communications';
 
 const {width,height} = Dimensions.get('window')
+let self;
 
 class HomePage extends Component  {
   constructor(props) {
     super(props);
     this.state = {
       position: {},
-      isActive: 0
+      isActive: 0,
+      order: {}
     }
+    self = this;
   }
 
-async componentDidMount() {
+  componentWillMount(){
+    OneSignal.inFocusDisplaying(0);
+    OneSignal.addEventListener('received', this.onReceived);
+    OneSignal.addEventListener('opened', this.onOpened);
+    OneSignal.addEventListener('ids', this.onIds);
+  }
+
+  componentDidMount() {
     this.watchId = navigator.geolocation.watchPosition(
       (position) => {
-        console.log(position)
-        this.locationUpdated();      
+        this.locationUpdated(position);      
       },
       (error) => this.setState({ error: error.message }),
-      { enableHighAccuracy: false, timeout: 20000, maximumAge: 1000, distanceFilter: 10 },
+      { enableHighAccuracy: true, timeout: 20000, maximumAge: 1000, distanceFilter: 50 },
     );
-    FCM.getInitialNotification().then(notif => {
-      this.setState({
-        initNotif: notif
-      })
-    });
-
-    try{
-      let result = await FCM.requestPermissions({badge: false, sound: true, alert: true});
-    } catch(e){
-      console.error(e);
-    }
-
-    FCM.getFCMToken().then(token => {
-      console.log("TOKEN (getFCMToken)", token);
-      ////// send this token to backend
-      this.props.updateUserToken(token)
-      this.setState({token: token || ""})
-    });
-
-    if(Platform.OS === 'ios'){
-      FCM.getAPNSToken().then(token => {
-        console.log("APNS TOKEN (getFCMToken)", token);
-      });
-    }
-
-    this.notificationListener = FCM.on(FCMEvent.Notification, notif => {  
-      console.log(notif);
-      //aps.alert
-      //.body
-      //{"duration":50,"zone":"محمد فريد","pric":150,"title":"لديك طلب جديد","order_id":219}"
-      title:"لديك طلب جديد"
-      if(notif.local_notification){
-        console.log('this is a local notification')
-      }
-      if(notif.opened_from_tray){
-        console.log('open from tray')
-      }
-      if(Platform.OS ==='ios'){
-        switch(notif._notificationType){
-          case NotificationType.Remote:
-            notif.finish(RemoteNotificationResult.NewData) //other types available: RemoteNotificationResult.NewData, RemoteNotificationResult.ResultFailed
-            break;
-          case NotificationType.NotificationResponse:
-            notif.finish();
-            break;
-          case NotificationType.WillPresent:
-            notif.finish();//WillPresentNotificationResult.All) //other types available: WillPresentNotificationResult.None
-            break;
-        }
-      }
-    });
-
-
   }
 
   componentWillUnmount() {
+    OneSignal.removeEventListener('received', this.onReceived);
+    OneSignal.removeEventListener('opened', this.onOpened);
+    OneSignal.removeEventListener('ids', this.onIds);
     navigator.geolocation.clearWatch(this.watchId);
     //Location.stopUpdatingLocation();
     const myModuleEvt = new NativeEventEmitter(Location)
     myModuleEvt.removeListener('locationUpdated')
-    //this.messageListener.remove();
+  }
+  
+  onReceived(notification) {
+    console.log("Notification received: ", notification);
+    let additionalData = notification.payload.additionalData
+    self.setState({
+      order: additionalData
+    })
+    self.popupDialog.show()
+  }
+
+  onOpened(openResult) {
+    console.log('Message: ', openResult.notification.payload.body);
+    console.log('Data: ', openResult.notification.payload.additionalData);
+    console.log('isActive: ', openResult.notification.isAppInFocus);
+    console.log('openResult: ', openResult);
+  }
+
+  onIds(device) {
+    console.log('Device info: ', device);
+    self.props.updateUserToken(device.userId)
   }
 
   render() {
+    const {
+      client,
+      cancelResonesList,
+      pageLoading,
+      pageLoadingError,
+      refreshing
+    } = this.props
+    console.log(this.props)
     return (
-      <View style={styles.container}>
+      <View style={{flex: 1}}>
         <ImageBackground
-          style={styles.loginBackground}
+          style={{width: width,height: height}}
           source={Images.loginBackground}
           resizeMode={'contain'}
         >
@@ -126,12 +117,6 @@ async componentDidMount() {
           <View style={{flex: 1}}>
             <MapView
                 style={{flex: 1,margin: 10,borderRadius: 5}}
-                initialRegion={{
-                  latitude: this.state.position.lat? this.state.position.lat : 6.2672295570373535,
-                  longitude:this.state.position.long? this.state.position.long : 31.229478498675235,
-                  latitudeDelta: 0.0922,
-                  longitudeDelta: 0.0421,
-                }}
                 region={{
                   latitude: this.state.position.lat? this.state.position.lat : 6.2672295570373535,
                   longitude:this.state.position.long? this.state.position.long : 31.229478498675235,
@@ -162,50 +147,67 @@ async componentDidMount() {
                     </Text>
                   </ImageBackground>
                 </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={()=> this.endOrder()}
+                  style={{width: 120,height: 44,borderRadius: 22}}
+                >
+                  <ImageBackground
+                    source={require('../assets/images/Gradient_Background_image.png')}
+                    style={{flex: 1,justifyContent: 'center',alignItems: 'center'}}
+                  >
+                    <Text style={{color: '#ffffff',fontSize: 13,fontFamily: 'NeoSansArabic'}}>
+                      {strings.endOrder}
+                    </Text>
+                  </ImageBackground>
+                </TouchableOpacity>
               </View>
-              <View style={{height: 140,position: 'absolute',bottom: 10,right: 10,left: 10,backgroundColor: 'rgba(0,0,0,0.65)',justifyContent: 'center',}}>
-                <View style={{flexDirection: 'row',alignItems: 'center',justifyContent: 'space-between',paddingHorizontal: 10}}>
-                    <View style={{flexDirection: 'row',alignItems: 'center'}}>
-                      <Image
-                        source={require('../assets/images/User-profile-image.png')}
-                      />
-                      <View style={{marginLeft: 5}}>
-                        <Text style={{color: '#ffffff',fontSize: 14,fontFamily: 'NeoSansArabic',textAlign: 'left'}}>
-                          محمد احمد مصطفي
-                        </Text>
-                        <Text style={{color: '#ffffff',fontSize: 14,fontFamily: 'NeoSansArabic',textAlign: 'left'}}>
-                          $100
-                        </Text>
+              {client?//.user_id?
+                <View style={{height: 140,position: 'absolute',bottom: 10,right: 10,left: 10,backgroundColor: 'rgba(0,0,0,0.65)',justifyContent: 'center',}}>
+                  <View style={{flexDirection: 'row',alignItems: 'center',justifyContent: 'space-between',paddingHorizontal: 10}}>
+                      <View style={{flexDirection: 'row',alignItems: 'center'}}>
+                        <Image
+                          source={require('../assets/images/User-profile-image.png')}
+                        />
+                        <View style={{marginLeft: 5}}>
+                          <Text style={{color: '#ffffff',fontSize: 14,fontFamily: 'NeoSansArabic',textAlign: 'left'}}>
+                            {client.user_name? client.user_name : 'Customer'}
+                          </Text>
+                          <Text style={{color: '#ffffff',fontSize: 14,fontFamily: 'NeoSansArabic',textAlign: 'left'}}>
+                            {this.state.order.pric}
+                          </Text>
+                        </View>
                       </View>
-                    </View>
-                    <View style={{}}>
-                      <Text style={{color: '#ffffff',fontSize: 14,fontFamily: 'NeoSansArabic',textAlign: 'left'}}>
-                        حي الزهور
+                      <View style={{}}>
+                        <Text style={{color: '#ffffff',fontSize: 14,fontFamily: 'NeoSansArabic',textAlign: 'left'}}>
+                          {this.state.order.zone}
+                        </Text>
+                        <Text style={{color: '#ffffff',fontSize: 10,fontFamily: 'NeoSansArabic',textAlign: 'right'}}>
+                          486 Manhattan Avenue
+                        </Text>
+                      </View>                    
+                  </View>
+                  <View style={{flexDirection: 'row',alignItems: 'center',alignSelf: 'center'}}>
+                    <TouchableOpacity
+                      onPress={()=> Communications.phonecall('0123456789', true)}
+                      style={{padding: 10,marginRight: 5}}
+                    >
+                      <Text style={{textAlign: 'center',color: '#ffffff',fontSize: 10,textDecorationLine: 'underline',}}>
+                        {strings.callClient}
                       </Text>
-                      <Text style={{color: '#ffffff',fontSize: 10,fontFamily: 'NeoSansArabic',textAlign: 'right'}}>
-                        486 Manhattan Avenue
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      onPress={()=> this.showCancelOrderPopup()}
+                      style={{padding: 10,marginLeft: 5}}
+                    >
+                      <Text style={{textAlign: 'center',color: '#ffffff',fontSize: 10,textDecorationLine: 'underline',}}>
+                        {strings.cancelOrder}
                       </Text>
-                    </View>                    
+                    </TouchableOpacity>
+                  </View>                
                 </View>
-                <View style={{flexDirection: 'row',alignItems: 'center',alignSelf: 'center'}}>
-                  <TouchableOpacity
-                    onPress={()=>{}}
-                    style={{padding: 10,marginRight: 5}}
-                  >
-                    <Text style={{textAlign: 'center',color: '#ffffff',fontSize: 10,textDecorationLine: 'underline',}}>
-                      {strings.callClient}
-                    </Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    onPress={()=>{}}
-                    style={{padding: 10,marginLeft: 5}}
-                  >
-                    <Text style={{textAlign: 'center',color: '#ffffff',fontSize: 10,textDecorationLine: 'underline',}}>
-                      {strings.cancelOrder}
-                    </Text>
-                  </TouchableOpacity>
-                </View>                
-              </View>
+                :
+                <View style={{width: 0,height: 0}}/>
+              }
           </View>
         </ImageBackground>
         <PopupDialog
@@ -216,11 +218,11 @@ async componentDidMount() {
         >
           <View style={{flex: 1,backgroundColor: 'rgba(0,0,0,0.43)',borderRadius: 9,padding: 10,alignItems: 'center'}}>
             <Text style={{fontFamily: 'NeoSansArabic',fontSize: 14,color: '#ffffff',textAlign: 'center'}}>
-              {strings.youHaveNewOrder}
+              {this.state.order.title}
             </Text>
             <View style={{width: 88,height: 88,marginTop: 8,borderColor: '#ffffff',borderWidth: 1,borderRadius: 44,justifyContent: 'center',alignItems: 'center'}}>
               <Text style={{fontFamily: 'NeoSansArabic',fontSize: 32,color: '#ffffff',textAlign: 'center'}}>
-                50
+                {this.state.order.duration}
               </Text>
               <Text style={{marginTop: 5,fontFamily: 'NeoSansArabic',fontSize: 14,color: '#ffffff',textAlign: 'center'}}>
                 {strings.second}
@@ -231,14 +233,53 @@ async componentDidMount() {
                 source={require('../assets/icons/Location-small-icon.png')}
               />
               <Text style={{marginLeft: 5,color: '#ffffff',fontSize: 14,fontFamily: 'NeoSansArabic'}}>
-                حي الزهور
+                {this.state.order.zone}
               </Text>
             </View>
             <Text style={{marginTop: 8,color: '#ffffff',fontSize: 14,fontFamily: 'NeoSansArabic'}}>
-              $100
+                {this.state.order.pric}
             </Text>
             <TouchableOpacity
-              onPress={()=> this.popupDialog.dismiss()}
+              onPress={()=> this.approveOrder()}
+              style={{width: 180,height: 40,borderRadius: 20,marginTop: 18}}
+            >
+              <ImageBackground
+                source={require('../assets/images/Gradient_WideBackground_image.png')}
+                style={{flex: 1,justifyContent: 'center',alignItems: 'center'}}
+              >
+                <Text style={{color: '#ffffff',fontSize: 13,fontFamily: 'NeoSansArabic'}}>
+                  {strings.approve}
+                </Text>
+              </ImageBackground>
+            </TouchableOpacity>
+          </View>
+        </PopupDialog>
+        <PopupDialog
+          ref={(popupDialog) => { this.cancelPopupDialog = popupDialog; }}
+          width={200}
+          height={250}
+          haveTitleBar={false}
+        >
+          <View style={{flex: 1,backgroundColor: '#FFFFFF',borderRadius: 9,padding: 10}}>
+            <Text style={{fontFamily: 'NeoSansArabic',fontSize: 14,color: '#707070',textAlign: 'center'}}>
+              الغاء الطلب
+            </Text>
+            {cancelResonesList.map((item,index)=>(
+              <TouchableOpacity
+                key={index}
+                onPress={()=> this.setState({selectedReason: item})}
+                style={{flexDirection: 'row',alignItems: 'center',paddingVertical: 10}}
+              >
+                <View style={{width: 20,height: 20,borderWidth: 1,borderColor: '#3C403F',borderRadius: 10,justifyContent: 'center',alignItems: 'center'}}>
+                  <View style={{width: 10,height: 10,backgroundColor: this.state.selectedReason == item? '#3C403F' : 'transparent',borderRadius: 5}}/>
+                </View>
+                <Text style={{marginLeft: 10,fontFamily: 'NeoSansArabic',fontSize: 12,color: '#1D7AB3',textAlign: 'left'}}>
+                  {item.cancel_order_reasons_en}
+                </Text>
+              </TouchableOpacity>
+            ))}
+            <TouchableOpacity
+              onPress={()=> this.cancelOrder()}
               style={{width: 180,height: 40,borderRadius: 20,marginTop: 18}}
             >
               <ImageBackground
@@ -256,48 +297,69 @@ async componentDidMount() {
     );
   }
   
-  locationUpdated() {
-    if (Platform.OS=='ios'){
-        Location.requestAlwaysAuthorization();
-        Location.setAllowsBackgroundLocationUpdates(true);
-        Location.setDistanceFilter(50);
-        Location.requestWhenInUseAuthorization();
-    }else{
-        Location.requestWhenInUseAuthorization();
-    }
-    Location.startUpdatingLocation();
-    const myModuleEvt = new NativeEventEmitter(Location)
-    var subscription = myModuleEvt.addListener(
-        'locationUpdated',
-        (location) => {
-          console.log(location)
-          var position = {
-              lat: (Platform.OS=='ios')?location.coords.latitude : location.latitude,
-              long: (Platform.OS=='ios')?location.coords.longitude : location.longitude
-          };
-          this.setState({position: position})
-          this.props.updateProvidorLocation(position)
-        }
-    );
+  locationUpdated(position) {
+    console.log(position)
+    this.setState({
+      position:{
+        lat: position.coords.latitude,
+        long: position.coords.longitude
+      }
+    })
+    const ref = firebase.database().ref('orders');
+    const geofireRef = new geofire(ref)
+    geofireRef.set('298',[position.coords.latitude,position.coords.longitude])
+    //ref.push(position);
   }
 
   activeOrNot(){
-    this.popupDialog.show()
     const data = {
       active: 1
     }
     this.props.updateProviderActive(data)
     this.setState({isActive: !this.state.isActive})
   }
+
+  approveOrder(){
+    this.popupDialog.dismiss()
+    let order = this.state.order
+    this.props.acceptOrder(order.order_id)
+    this.watchId = navigator.geolocation.watchPosition(
+      (position) => {
+        this.locationUpdated(position);      
+      },
+      (error) => this.setState({ error: error.message }),
+      { enableHighAccuracy: true, timeout: 20000, maximumAge: 1000, distanceFilter: 50 },
+    );
+  }
+
+  showCancelOrderPopup(){
+    this.props.getCancelResones()
+    this.cancelPopupDialog.show()
+  }
+
+  cancelOrder(){
+    const reason = this.state.selectedReason
+    const reasonText = this.state.reasonText
+    this.props.cancelOrder(order_id,reason.cancel_order_reasons_id,reasonText)
+  }
+
+  endOrder(){
+    this.props.endOrder(298)
+    navigator.geolocation.clearWatch(this.watchId);
+  }
 }
 
 const mapStateToProps = ({main}) => {
   const {
+    client,
+    cancelResonesList,
     pageLoading,
     pageLoadingError,
     refreshing
   } = main;
   return {
+    client,
+    cancelResonesList,
     pageLoading,
     pageLoadingError,
     refreshing,
@@ -307,5 +369,9 @@ const mapStateToProps = ({main}) => {
 export default connect(mapStateToProps,{
   updateProvidorLocation,
   updateProviderActive,
-  updateUserToken
+  updateUserToken,
+  acceptOrder,
+  getCancelResones,
+  cancelOrder,
+  endOrder
 })(withNavigation(HomePage));

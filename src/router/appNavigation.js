@@ -1,4 +1,4 @@
-import { StackNavigator } from 'react-navigation'
+import { createStackNavigator } from 'react-navigation'
 import HomePage from '../pages/home'
 import VerifyPhoneScreen from '../pages/VerifyPhoneScreen'
 import LoginScreen from '../pages/LoginScreen'
@@ -7,7 +7,7 @@ import SplashScreen from '../pages/SplashScreen'
 import styles from '../pages/styles/navigationStyles'
 
 // Manifest of possible screens
-const PrimaryNav = StackNavigator({
+const PrimaryNav = createStackNavigator({
   HomeScreen: { 
     screen: HomePage 
   },

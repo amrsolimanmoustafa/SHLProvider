@@ -1,6 +1,5 @@
 import * as firebase from 'firebase';
 require('firebase/app');
-require('firebase/messaging');
 // should go in a secret file
 var config = {
   apiKey: "AIzaSyAm7qwx12pV5PdH100bkZQTtLfR6BGKk5U",
@@ -13,10 +12,6 @@ var config = {
 
 firebase.initializeApp(config);
 
-
-firebase.messaging().onMessage((message) => {
-  console.log(message)
-});
 
 export default firebase;
 //export const messaging = firebase.messaging();
