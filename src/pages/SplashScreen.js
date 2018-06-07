@@ -5,7 +5,7 @@ import {
   ImageBackground
 } from 'react-native'
 import { connect } from 'react-redux'
-import styles from './styles/SplashScreenStyle'
+import styles from './styles/splashScreenStyle'
 import * as Animatable from "react-native-animatable";
 
 class SplashScreen extends Component {

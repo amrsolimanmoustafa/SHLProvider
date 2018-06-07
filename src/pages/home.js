@@ -34,6 +34,7 @@ import { withNavigation } from "react-navigation";
 import firebase from 'react-native-firebase';
 import geofire from 'geofire';
 import Communications from 'react-native-communications';
+import MapViewDirections from 'react-native-maps-directions';
 
 const {width,height} = Dimensions.get('window')
 let self;
@@ -72,8 +73,8 @@ class HomePage extends Component  {
     OneSignal.removeEventListener('ids', this.onIds);
     navigator.geolocation.clearWatch(this.watchId);
     //Location.stopUpdatingLocation();
-    const myModuleEvt = new NativeEventEmitter(Location)
-    myModuleEvt.removeListener('locationUpdated')
+    //const myModuleEvt = new NativeEventEmitter(Location)
+    //myModuleEvt.removeListener('locationUpdated')
   }
   
   onReceived(notification) {
@@ -103,9 +104,11 @@ class HomePage extends Component  {
       cancelResonesList,
       pageLoading,
       pageLoadingError,
-      refreshing
+      refreshing,
+      navigation
     } = this.props
     console.log(this.props)
+    const destination = {latitude: 30.0771, longitude: 31.2859};
     return (
       <View style={{flex: 1}}>
         <ImageBackground
@@ -113,102 +116,119 @@ class HomePage extends Component  {
           source={Images.loginBackground}
           resizeMode={'contain'}
         >
-          {<Header/>}
-          <View style={{flex: 1}}>
-            <MapView
-                style={{flex: 1,margin: 10,borderRadius: 5}}
-                region={{
-                  latitude: this.state.position.lat? this.state.position.lat : 6.2672295570373535,
-                  longitude:this.state.position.long? this.state.position.long : 31.229478498675235,
-                  latitudeDelta: 0.0922,
-                  longitudeDelta: 0.0421,
-                }}
-              >
-                <MapView.Marker.Animated 
-                    coordinate={
-                      new MapView.AnimatedRegion({
-                        latitude: this.state.position.lat? this.state.position.lat : 6.2672295570373535,
-                        longitude:this.state.position.long? this.state.position.long : 31.229478498675235,
-                      })
-                    }
-                />
-              </MapView>
-              <View style={{position: 'absolute',top: 20,left: width/2 - 60}}>
-                <TouchableOpacity
-                  onPress={()=> this.activeOrNot()}
-                  style={{width: 120,height: 44,borderRadius: 22}}
+          <Header navigation={navigation}/>
+          {this.state.position.lat?
+            <View style={{flex: 1}}>
+              <MapView
+                  style={{flex: 1,margin: 10,borderRadius: 5}}
+                  region={{
+                    latitude: this.state.position.lat? this.state.position.lat : 6.2672295570373535,
+                    longitude: this.state.position.long? this.state.position.long : 31.229478498675235,
+                    latitudeDelta: 0.0922,
+                    longitudeDelta: 0.0421,
+                  }}
                 >
-                  <ImageBackground
-                    source={require('../assets/images/Gradient_Background_image.png')}
-                    style={{flex: 1,justifyContent: 'center',alignItems: 'center'}}
+                  <MapViewDirections
+                    origin={{latitude: this.state.position.lat, longitude: this.state.position.long}}
+                    destination={destination}
+                    language={'ar'}
+                    apikey={'AIzaSyAMVAuZSku-7gAMuWMFEj1kdjNtP2TLFOg'}
+                    strokeWidth={2}
+                    strokeColor="#27ae60"
+                  />
+                  <MapView.Marker.Animated 
+                      coordinate={
+                        new MapView.AnimatedRegion(destination)
+                      }
+                  />
+                  <MapView.Marker.Animated 
+                      coordinate={
+                        new MapView.AnimatedRegion({
+                          latitude: this.state.position.lat? this.state.position.lat : 6.2672295570373535,
+                          longitude:this.state.position.long? this.state.position.long : 31.229478498675235,
+                        })
+                      }
+                  />
+                </MapView>
+                <View style={{position: 'absolute',top: 20,left: width/2 - 60}}>
+                  <TouchableOpacity
+                    onPress={()=> this.activeOrNot()}
+                    style={{width: 120,height: 44,borderRadius: 22}}
                   >
-                    <Text style={{color: '#ffffff',fontSize: 13,fontFamily: 'NeoSansArabic'}}>
-                      {this.state.isActive? strings.unavailable : strings.available}
-                    </Text>
-                  </ImageBackground>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  onPress={()=> this.endOrder()}
-                  style={{width: 120,height: 44,borderRadius: 22}}
-                >
-                  <ImageBackground
-                    source={require('../assets/images/Gradient_Background_image.png')}
-                    style={{flex: 1,justifyContent: 'center',alignItems: 'center'}}
+                    <ImageBackground
+                      source={require('../assets/images/Gradient_Background_image.png')}
+                      style={{flex: 1,justifyContent: 'center',alignItems: 'center'}}
+                    >
+                      <Text style={{color: '#ffffff',fontSize: 13,fontFamily: 'NeoSansArabic'}}>
+                        {this.state.isActive? strings.unavailable : strings.available}
+                      </Text>
+                    </ImageBackground>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={()=> this.endOrder()}
+                    style={{width: 120,height: 44,borderRadius: 22}}
                   >
-                    <Text style={{color: '#ffffff',fontSize: 13,fontFamily: 'NeoSansArabic'}}>
-                      {strings.endOrder}
-                    </Text>
-                  </ImageBackground>
-                </TouchableOpacity>
-              </View>
-              {client?//.user_id?
-                <View style={{height: 140,position: 'absolute',bottom: 10,right: 10,left: 10,backgroundColor: 'rgba(0,0,0,0.65)',justifyContent: 'center',}}>
-                  <View style={{flexDirection: 'row',alignItems: 'center',justifyContent: 'space-between',paddingHorizontal: 10}}>
-                      <View style={{flexDirection: 'row',alignItems: 'center'}}>
-                        <Image
-                          source={require('../assets/images/User-profile-image.png')}
-                        />
-                        <View style={{marginLeft: 5}}>
-                          <Text style={{color: '#ffffff',fontSize: 14,fontFamily: 'NeoSansArabic',textAlign: 'left'}}>
-                            {client.user_name? client.user_name : 'Customer'}
-                          </Text>
-                          <Text style={{color: '#ffffff',fontSize: 14,fontFamily: 'NeoSansArabic',textAlign: 'left'}}>
-                            {this.state.order.pric}
-                          </Text>
-                        </View>
-                      </View>
-                      <View style={{}}>
-                        <Text style={{color: '#ffffff',fontSize: 14,fontFamily: 'NeoSansArabic',textAlign: 'left'}}>
-                          {this.state.order.zone}
-                        </Text>
-                        <Text style={{color: '#ffffff',fontSize: 10,fontFamily: 'NeoSansArabic',textAlign: 'right'}}>
-                          486 Manhattan Avenue
-                        </Text>
-                      </View>                    
-                  </View>
-                  <View style={{flexDirection: 'row',alignItems: 'center',alignSelf: 'center'}}>
-                    <TouchableOpacity
-                      onPress={()=> Communications.phonecall('0123456789', true)}
-                      style={{padding: 10,marginRight: 5}}
+                    <ImageBackground
+                      source={require('../assets/images/Gradient_Background_image.png')}
+                      style={{flex: 1,justifyContent: 'center',alignItems: 'center'}}
                     >
-                      <Text style={{textAlign: 'center',color: '#ffffff',fontSize: 10,textDecorationLine: 'underline',}}>
-                        {strings.callClient}
+                      <Text style={{color: '#ffffff',fontSize: 13,fontFamily: 'NeoSansArabic'}}>
+                        {strings.endOrder}
                       </Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      onPress={()=> this.showCancelOrderPopup()}
-                      style={{padding: 10,marginLeft: 5}}
-                    >
-                      <Text style={{textAlign: 'center',color: '#ffffff',fontSize: 10,textDecorationLine: 'underline',}}>
-                        {strings.cancelOrder}
-                      </Text>
-                    </TouchableOpacity>
-                  </View>                
+                    </ImageBackground>
+                  </TouchableOpacity>
                 </View>
-                :
-                <View style={{width: 0,height: 0}}/>
-              }
-          </View>
+                {client?//.user_id?
+                  <View style={{height: 140,position: 'absolute',bottom: 10,right: 10,left: 10,backgroundColor: 'rgba(0,0,0,0.65)',justifyContent: 'center',}}>
+                    <View style={{flexDirection: 'row',alignItems: 'center',justifyContent: 'space-between',paddingHorizontal: 10}}>
+                        <View style={{flexDirection: 'row',alignItems: 'center'}}>
+                          <Image
+                            source={require('../assets/images/User-profile-image.png')}
+                          />
+                          <View style={{marginLeft: 5}}>
+                            <Text style={{color: '#ffffff',fontSize: 14,fontFamily: 'NeoSansArabic',textAlign: 'left'}}>
+                              {client.user_name? client.user_name : 'Customer'}
+                            </Text>
+                            <Text style={{color: '#ffffff',fontSize: 14,fontFamily: 'NeoSansArabic',textAlign: 'left'}}>
+                              {this.state.order.pric}
+                            </Text>
+                          </View>
+                        </View>
+                        <View style={{}}>
+                          <Text style={{color: '#ffffff',fontSize: 14,fontFamily: 'NeoSansArabic',textAlign: 'left'}}>
+                            {this.state.order.zone}
+                          </Text>
+                          <Text style={{color: '#ffffff',fontSize: 10,fontFamily: 'NeoSansArabic',textAlign: 'right'}}>
+                            486 Manhattan Avenue
+                          </Text>
+                        </View>                    
+                    </View>
+                    <View style={{flexDirection: 'row',alignItems: 'center',alignSelf: 'center'}}>
+                      <TouchableOpacity
+                        onPress={()=> Communications.phonecall('0123456789', true)}
+                        style={{padding: 10,marginRight: 5}}
+                      >
+                        <Text style={{textAlign: 'center',color: '#ffffff',fontSize: 10,textDecorationLine: 'underline',}}>
+                          {strings.callClient}
+                        </Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        onPress={()=> this.showCancelOrderPopup()}
+                        style={{padding: 10,marginLeft: 5}}
+                      >
+                        <Text style={{textAlign: 'center',color: '#ffffff',fontSize: 10,textDecorationLine: 'underline',}}>
+                          {strings.cancelOrder}
+                        </Text>
+                      </TouchableOpacity>
+                    </View>                
+                  </View>
+                  :
+                  <View style={{width: 0,height: 0}}/>
+                }
+            </View>
+            :
+            <View />
+          }
         </ImageBackground>
         <PopupDialog
           ref={(popupDialog) => { this.popupDialog = popupDialog; }}

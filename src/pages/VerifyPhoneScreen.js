@@ -7,7 +7,7 @@ import {
   Image
 } from 'react-native'
 import { connect } from 'react-redux'
-import styles from './styles/VerifyPhoneScreenStyle'
+import styles from './styles/verifyPhoneScreenStyle'
 import {Images} from '../Themes';
 //The box inside the elevation
 import VerifyPhone from "../components/VerifyPhone";

@@ -76,22 +76,6 @@ export const acceptOrder = (orderId) => {
         Backend.acceptOrder(orderId,data)
         .then(async (response) => {
             console.log(response)
-            /*{
-                activate: "1"
-                city_id: null
-                created_at: "2018-04-16 13:19:12"
-                email: null
-                lang_id: 1
-                phone: "009658484524154"
-                profile_pic: null
-                token_id: "4564vdfjhgefvbkfgvsdfg0w-wejkfhwfh"
-                type: null
-                updated_at: "2018-04-16 13:27:34"
-                user_id: 1
-                user_name: null
-                v_code: "1121"
-                zone_id: null
-            }*/
             let order = response.orders[0]
             if(response != undefined){
                 AsyncStorage.multiSet([

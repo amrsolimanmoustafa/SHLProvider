@@ -6,6 +6,7 @@ import {
   Image,
   Dimensions
 } from 'react-native'
+import  { Button,Icon } from "native-base"
 import styles from './styles/HeaderStyle'
 import {Images} from '../Themes';
 const {width,height} = Dimensions.get('window')
@@ -15,6 +16,7 @@ export default class Header extends Component {
     return (
       <View style={{width: width,height: 70,paddingTop: 20,flexDirection:"row",alignItems: 'center',justifyContent: 'space-between'}}>
         <TouchableOpacity
+          onPress={() => this.props.navigation.navigate('LeftSideMenu')}
           style={{paddingVertical: 10,paddingHorizontal: 15}}
         >
           <Image
@@ -28,6 +30,7 @@ export default class Header extends Component {
           />
         </View>
         <TouchableOpacity
+          onPress={() => this.props.navigation.navigate('RightSideMenu')}
           style={{paddingVertical: 10,paddingHorizontal: 15}}
         >
           <Image

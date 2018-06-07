@@ -34,6 +34,7 @@
   [self.window makeKeyAndVisible];
   self.oneSignal = [[RCTOneSignal alloc] initWithLaunchOptions:launchOptions
                                                          appId:@"6f9fbf9d-b26e-477a-9710-ed334b1a274b"];
+
   return YES;
 }
 

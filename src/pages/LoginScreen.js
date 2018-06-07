@@ -10,7 +10,7 @@ import {
 } from 'react-native'
 import { connect } from 'react-redux'
 import LoginInsertPhone from "../components/LoginInsertPhone.js"
-import styles from './styles/LoginScreenStyle'
+import styles from './styles/loginScreenStyle'
 import {Images} from '../Themes';
 import * as Animatable from "react-native-animatable";
 import strings from '../strings'
